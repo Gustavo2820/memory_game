@@ -20,11 +20,9 @@ class Card:
     def draw(self, surface):
         # Desenha o fundo da carta
         if self.matched:
-            color = (100, 200, 100)  # Verde claro para cartas pareadas
+            color = (100, 200, 100)  # Verde claro para cartas acertadas
         elif self.revealed:
-            color = (150, 150, 200)  # Azul claro para cartas reveladas
-        elif self.highlight:
-            color = (200, 200, 200)  # Cinza claro para highlight
+            color = (150, 150, 200)  # Azul claro para cartas viradas (reveladas)
         else:
             color = (100, 100, 100)  # Cinza escuro para cartas normais
             

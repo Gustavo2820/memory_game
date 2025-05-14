@@ -3,8 +3,11 @@ from board.board import Board
 
 class Game:
     def __init__(self, surface):
-        self.board = Board()
         self.surface = surface
+        self.reset_game()
+
+    def reset_game(self):
+        self.board = Board()
         self.score = {1: 0, 2: 0}
         self.flipped_cards = []
         self.waiting_time = 0
@@ -32,29 +35,33 @@ class Game:
         self.flipped_cards.clear()
 
     def handle_event(self, event):
-        if self.game_over:
-            return
-
-        current_time = pygame.time.get_ticks()
-        
-        # Atualiza o estado de espera
-        if self.waiting and current_time > self.waiting_time:
-            self.waiting = False
-            for card in self.board.cards:
-                if card.revealed and not card.matched:
-                    card.flip()
-
-        if event.type == pygame.MOUSEBUTTONDOWN and not self.waiting:
+        if event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
-            for card in self.board.cards:
-                if card.is_clicked(pos) and not card.revealed and not card.matched:
-                    card.flip()
-                    self.flipped_cards.append(card)
-                    if len(self.flipped_cards) == 2:
-                        self.check_pair()
+            
+            # Verifica se clicou no botão de reiniciar
+            if self.game_over:
+                restart_button = pygame.Rect(500, 450, 200, 50)
+                if restart_button.collidepoint(pos):
+                    self.reset_game()
+                    return
 
-    def update(self):
-        pass
+            if not self.game_over:
+                current_time = pygame.time.get_ticks()
+                
+                # Atualiza o estado de espera
+                if self.waiting and current_time > self.waiting_time:
+                    self.waiting = False
+                    for card in self.board.cards:
+                        if card.revealed and not card.matched:
+                            card.flip()
+
+                if not self.waiting:
+                    for card in self.board.cards:
+                        if card.is_clicked(pos) and not card.revealed and not card.matched:
+                            card.flip()
+                            self.flipped_cards.append(card)
+                            if len(self.flipped_cards) == 2:
+                                self.check_pair()
 
     def draw_score(self):
         font = pygame.font.Font(None, 36)
@@ -83,12 +90,23 @@ class Game:
             text_rect = wait_surface.get_rect(center=(600, 80))
             self.surface.blit(wait_surface, text_rect)
 
-        # Se o jogo acabou, mostra o vencedor
+        # Se o jogo acabou, mostra o vencedor e o botão de reiniciar
         if self.game_over:
+            # Desenha o texto do vencedor
             winner_text = f"Fim de Jogo! Jogador {self.winner} venceu!"
-            winner_surface = font.render(winner_text, True, (0, 255, 0))
+            winner_surface = font.render(winner_text, True, (255, 255, 0))
             text_rect = winner_surface.get_rect(center=(600, 400))
             self.surface.blit(winner_surface, text_rect)
+
+            # Desenha o botão de reiniciar
+            restart_button = pygame.Rect(500, 450, 200, 50)
+            pygame.draw.rect(self.surface, (0, 100, 200), restart_button)
+            pygame.draw.rect(self.surface, (0, 255, 0), restart_button, 2)
+            
+            restart_text = "Jogar Novamente"
+            restart_surface = font.render(restart_text, True, (255, 255, 255))
+            text_rect = restart_surface.get_rect(center=restart_button.center)
+            self.surface.blit(restart_surface, text_rect)
 
     def draw(self):
         self.board.draw(self.surface)

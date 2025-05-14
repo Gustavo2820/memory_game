@@ -9,11 +9,12 @@ class ThemeManager:
                 "Rammstein", "Guns N' Roses", "S.O.A.D", "Red Hot"
             ],
             "Anime": [
-                "Naruto", "Goku", "Luffy", "Ichigo", "Eren", "Mikasa",
-                "Levi", "Edward", "Light", "L", "Gon", "Killua",
-                "Saitama", "Gintoki", "Spike", "Vash", "Alucard", "Guts",
-                "Monkey D. Dragon", "Vegeta", "Sasuke", "Zoro", "Kakashi", "All Might"
+                "Naruto", "Dragon Ball", "One Piece", "Bleach", "Attack on Titan", "FMAB",
+                "Death Note", "HxH", "Steins;Gate", "Vinland Saga", "Evangelion", "Code Geass",
+                "Hellsing", "Berserk", "Lain", "Tokyo Ghoul", "Devilman", "Chainsaw Man",
+                "Mob Psycho", "Trigun", "Monster", "JoJo", "Akira", "Dr. Stone"
             ],
+
             "Games": [
                 "Zelda", "Super Mario", "God of War", "Halo",
                 "TLOU", "Red Dead", "GTA", "Minecraft",

@@ -21,7 +21,7 @@ class Menu:
         
         # Opções do menu
         self.options = ["Jogar Local", "Jogar em Rede", "Escolher Tema", "Sair"]
-        self.network_options = ["Terminal", "GUI (em breve)", "Voltar"]
+        self.network_options = ["Terminal", "GUI", "Voltar"]
         self.themes = self.theme_manager.get_available_themes()
         
         # Retângulos para interação com o mouse
@@ -87,7 +87,7 @@ class Menu:
                         if self.network_options[i].startswith("Terminal"):
                             return "PLAY_NETWORK_TERMINAL"
                         elif self.network_options[i].startswith("GUI"):
-                            return "NETWORK_GUI_SOON"
+                            return "PLAY_NETWORK_GUI"
                         elif self.network_options[i] == "Voltar":
                             self.in_network_menu = False
             elif not self.in_theme_selection:
@@ -135,7 +135,7 @@ class Menu:
                     if self.network_options[self.selected_network].startswith("Terminal"):
                         return "PLAY_NETWORK_TERMINAL"
                     elif self.network_options[self.selected_network].startswith("GUI"):
-                        return "NETWORK_GUI_SOON"
+                        return "PLAY_NETWORK_GUI"
                     elif self.network_options[self.selected_network] == "Voltar":
                         self.in_network_menu = False
             elif not self.in_theme_selection:

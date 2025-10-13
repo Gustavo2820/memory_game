@@ -65,8 +65,13 @@ def main():
                         else:
                             print("Nenhum terminal suportado encontrado. Execute 'python3 client.py' manualmente.")
                     sys.exit(0)
-                elif result == "NETWORK_GUI_SOON":
-                    print("Modo GUI em rede estará disponível em breve!")
+                elif result == "PLAY_NETWORK_GUI":
+                    pygame.quit()
+                    print("Iniciando cliente GUI...")
+                    import subprocess
+                    import sys
+                    subprocess.run([sys.executable, "client_gui.py"])
+                    sys.exit(0)
             elif current_state == "GAME":
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     current_state = "MENU"

@@ -7,6 +7,30 @@ import sys
 from game_logic.network_game import NetworkGame
 from protocol import *
 
+# Cores ANSI para terminal
+class Colors:
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    WHITE = '\033[97m'
+
+def log_info(message):
+    print(f"{Colors.BLUE}[INFO]{Colors.RESET} {message}")
+
+def log_success(message):
+    print(f"{Colors.GREEN}[SUCCESS]{Colors.RESET} {message}")
+
+def log_warning(message):
+    print(f"{Colors.YELLOW}[WARNING]{Colors.RESET} {message}")
+
+def log_error(message):
+    print(f"{Colors.RED}[ERROR]{Colors.RESET} {message}")
+
 class NetworkGameClient:
     def __init__(self, screen):
         self.screen = screen
@@ -23,14 +47,19 @@ class NetworkGameClient:
         self.port = port
         self.player_name = player_name
         
+        log_info(f"Tentando conectar ao servidor em {host}:{port}...")
+        log_info(f"Nome do jogador: {player_name}")
+        
         # Cria a instância do NetworkGame
         self.network_game = NetworkGame(self.screen, host, port)
         
         # Conecta ao servidor
         if await self.network_game.connect(player_name):
+            log_success("Conectado ao servidor com sucesso!")
             self.current_state = "PLAYING"
             return True
         else:
+            log_error("Falha ao conectar ao servidor")
             self.current_state = "DISCONNECTED"
             return False
     

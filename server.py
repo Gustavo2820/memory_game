@@ -4,6 +4,30 @@ import random
 from protocol import *
 from themes.theme_manager import ThemeManager
 
+# Cores ANSI para terminal
+class Colors:
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    WHITE = '\033[97m'
+
+def log_info(message):
+    print(f"{Colors.BLUE}[INFO]{Colors.RESET} {message}")
+
+def log_success(message):
+    print(f"{Colors.GREEN}[SUCCESS]{Colors.RESET} {message}")
+
+def log_warning(message):
+    print(f"{Colors.YELLOW}[WARNING]{Colors.RESET} {message}")
+
+def log_error(message):
+    print(f"{Colors.RED}[ERROR]{Colors.RESET} {message}")
+
 async def handler(websocket):
     await MemoryGameServer.instance.handle_connection(websocket)
 
@@ -69,10 +93,16 @@ class MemoryGameServer:
 
     async def handle_connection(self, websocket):
         nome = None
+        client_address = websocket.remote_address
+        log_info(f"Tentativa de conexão recebida de {client_address[0]}:{client_address[1]}")
+        
         try:
             await websocket.send(f"INFO Tema do jogo: {self.theme_manager.current_theme}")
             await websocket.send(f"INFO Tabuleiro: {self.height}x{self.width} cartas")
             await websocket.send(f"INFO Linhas válidas: 1 a {self.height}, Colunas válidas: 1 a {self.width}")
+            log_success(f"Cliente conectado: {client_address[0]}:{client_address[1]}")
+            log_info(f"Total de clientes conectados: {len(self.clients) + 1}")
+            
             async for msg in websocket:
                 self.log.append(f"RECV {msg.strip()}")
                 cmd, args = parse_message(msg)
@@ -93,6 +123,7 @@ class MemoryGameServer:
                     await websocket.send(format_start())
                     await websocket.send(f"INFO Bem-vindo, {nome}! Aguarde o segundo jogador...")
                     await websocket.send(f"INFO Linhas válidas: 1 a {self.height}, Colunas válidas: 1 a {self.width}")
+                    log_success(f"Jogador '{nome}' entrou no jogo")
                     self.log.append(f"SEND START para {nome}")
                     self.log.append(f"[JOIN] {nome} entrou no jogo.")
                     if len(self.clients) == 2:
@@ -104,6 +135,7 @@ class MemoryGameServer:
                         for ws, n in self.clients:
                             await ws.send(format_turn(self.names[self.turn]))
                             await ws.send(f"INFO É o turno de {self.names[self.turn]}")
+                        log_success(f"Jogo iniciado com jogadores: {', '.join(self.names)}")
                         self.log.append(f"[START] Jogo iniciado com jogadores: {self.names}")
                 elif cmd == 'REVEAL' and self.state == 'playing':
                     if nome != self.names[self.turn]:
@@ -180,11 +212,14 @@ class MemoryGameServer:
                     await websocket.send(format_error("Comando invalido ou fora de contexto"))
                     self.log.append(f"[ERROR] Comando invalido ou fora de contexto por {nome}")
         except Exception as e:
+            log_error(f"Erro na conexão com {client_address[0]}:{client_address[1]}: {e}")
             self.log.append(f"ERRO: {e}")
         finally:
             if nome:
+                log_warning(f"Jogador '{nome}' desconectou")
                 self.log.append(f"{nome} desconectou.")
             else:
+                log_warning(f"Cliente anônimo desconectou de {client_address[0]}:{client_address[1]}")
                 self.log.append(f"Cliente anonimo desconectou.")
             self.clients = [(ws, n) for ws, n in self.clients if ws != websocket]
             if nome in self.names:
@@ -194,6 +229,7 @@ class MemoryGameServer:
             for ws, n in self.clients:
                 await ws.send(format_disconnect(nome or "Desconhecido"))
                 await ws.send(f"INFO O jogador {nome or 'Desconhecido'} saiu do jogo.")
+            log_info(f"Total de clientes conectados: {len(self.clients)}")
             self.log.append(f"[DISCONNECT] {nome or 'Desconhecido'} removido da partida.")
 
     def print_log(self):
@@ -203,14 +239,27 @@ class MemoryGameServer:
         print("---------------------\n")
 
     def run(self):
-        print(f"Servidor ouvindo em ws://{self.host}:{self.port}")
+        log_info(f"Servidor iniciando em ws://{self.host}:{self.port}")
+        log_info(f"Tema selecionado: {self.theme_manager.current_theme}")
+        log_info(f"Tamanho do tabuleiro: {self.height}x{self.width}")
+        
         async def main():
-            async with websockets.serve(handler, self.host, self.port):
-                await asyncio.Future()  # roda para sempre
+            try:
+                async with websockets.serve(handler, self.host, self.port):
+                    log_success(f"Servidor ouvindo em ws://{self.host}:{self.port}")
+                    log_info("Aguardando conexões...")
+                    await asyncio.Future()  # roda para sempre
+            except Exception as e:
+                log_error(f"Erro ao iniciar servidor: {e}")
+                raise
+                
         try:
             asyncio.run(main())
         except KeyboardInterrupt:
-            print("\nServidor encerrado.")
+            log_warning("Servidor encerrado pelo usuário.")
+            self.print_log()
+        except Exception as e:
+            log_error(f"Erro fatal no servidor: {e}")
             self.print_log()
 
 if __name__ == "__main__":

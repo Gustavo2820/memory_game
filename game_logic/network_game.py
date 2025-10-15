@@ -5,6 +5,30 @@ from protocol import *
 from board.board import Board
 from themes.theme_manager import ThemeManager
 
+# Cores ANSI para terminal
+class Colors:
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    WHITE = '\033[97m'
+
+def log_info(message):
+    print(f"{Colors.BLUE}[INFO]{Colors.RESET} {message}")
+
+def log_success(message):
+    print(f"{Colors.GREEN}[SUCCESS]{Colors.RESET} {message}")
+
+def log_warning(message):
+    print(f"{Colors.YELLOW}[WARNING]{Colors.RESET} {message}")
+
+def log_error(message):
+    print(f"{Colors.RED}[ERROR]{Colors.RESET} {message}")
+
 class NetworkGame:
     def __init__(self, surface, host='localhost', port=8765):
         self.surface = surface
@@ -34,6 +58,7 @@ class NetworkGame:
         """Conecta ao servidor e envia comando JOIN"""
         try:
             uri = f"ws://{self.host}:{self.port}"
+            log_info(f"Conectando ao servidor {uri}...")
             self.websocket = await websockets.connect(uri)
             self.connected = True
             self.player_name = player_name
@@ -43,9 +68,19 @@ class NetworkGame:
             
             # Envia comando JOIN
             await self.websocket.send(format_join(player_name))
+            log_success(f"Conectado ao servidor como '{player_name}'")
             return True
+        except websockets.exceptions.ConnectionRefused:
+            log_error("Falha na conexão: servidor recusou ou firewall bloqueando a porta.")
+            return False
+        except websockets.exceptions.InvalidURI:
+            log_error("Falha na conexão: IP incorreto ou formato de URI inválido.")
+            return False
+        except websockets.exceptions.WebSocketException as e:
+            log_error(f"Falha na conexão: {e}")
+            return False
         except Exception as e:
-            print(f"Erro ao conectar: {e}")
+            log_error(f"Erro inesperado ao conectar: {e}")
             return False
     
     async def receive_messages(self):
@@ -53,8 +88,10 @@ class NetworkGame:
         try:
             async for message in self.websocket:
                 await self.message_queue.put(message)
+        except websockets.exceptions.ConnectionClosed:
+            log_warning("Conexão com servidor foi fechada")
         except Exception as e:
-            print(f"Erro ao receber mensagens: {e}")
+            log_error(f"Erro ao receber mensagens: {e}")
         finally:
             self.connected = False
     
@@ -75,11 +112,14 @@ class NetworkGame:
         self.running = False
         if self.websocket and self.connected:
             try:
+                log_info("Desconectando do servidor...")
                 await self.websocket.send(format_quit())
                 await self.websocket.close()
-            except:
-                pass
-            self.connected = False
+                log_success("Desconectado do servidor com sucesso")
+            except Exception as e:
+                log_warning(f"Erro ao desconectar: {e}")
+            finally:
+                self.connected = False
     
     async def send_reveal(self, x, y):
         """Envia comando REVEAL para o servidor"""
